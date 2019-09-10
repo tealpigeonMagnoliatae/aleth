@@ -787,9 +787,6 @@ public:
         // let r := staticcall(10000, 0x4, 0, 0, 0, 0)
         bytes code = fromHex("60006000600060006004612710fa50");
 
-        se.reset(ChainParams(genesisInfo(Network::IstanbulTest)).createSealEngine());
-        version = IstanbulSchedule.accountVersion;
-
         ExtVM extVm(state, envInfo, *se, address, address, address, value, gasPrice, {}, ref(code),
             sha3(code), version, depth, isCreate, staticCall);
 
@@ -810,10 +807,16 @@ public:
         BOOST_REQUIRE_EQUAL(gasBefore - gasAfter, 700 + 15);
     }
 
-    void testStaticCallHasCorrectCostInBerlin()
+    void testStaticCallHasCorrectCostWithEIP2046()
     {
         // let r := staticcall(10000, 0x4, 0, 0, 0, 0)
         bytes code = fromHex("60006000600060006004612710fa50");
+
+        ChainParams cp{genesisInfo(Network::IstanbulTest)};
+        cp.lastForkBlock = cp.istanbulForkBlock;
+        cp.lastForkAdditionalEIPs.eip2046 = true;
+
+        se.reset(cp.createSealEngine());
 
         ExtVM extVm(state, envInfo, *se, address, address, address, value, gasPrice, {}, ref(code),
             sha3(code), version, depth, isCreate, staticCall);
@@ -1262,6 +1265,16 @@ BOOST_AUTO_TEST_CASE(LegacyVMTestDelegateCallCorrectCost)
 BOOST_AUTO_TEST_CASE(LegacyVMTestDelegateCallSelfCorrectCost)
 {
     testDelegateCallCorrectCost(true /* call self */);
+}
+
+BOOST_AUTO_TEST_CASE(LegacyVMStaticCallCostEqualToCallInIstanbul)
+{
+    testStaticCallCostEqualToCallInIstanbul();
+}
+
+BOOST_AUTO_TEST_CASE(LegacyVMStaticCallHasCorrectCostWithEIP2046)
+{
+    testStaticCallHasCorrectCostWithEIP2046();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
